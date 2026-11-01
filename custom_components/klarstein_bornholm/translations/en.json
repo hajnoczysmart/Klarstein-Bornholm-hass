@@ -1,0 +1,119 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Klarstein Bornholm",
+        "description": "Enter the heater's local Tuya details. Device ID and local key can be fetched with `tinytuya wizard` or the Tuya IoT platform (see README).",
+        "data": {
+          "host": "IP address",
+          "device_id": "Device ID",
+          "local_key": "Local key",
+          "protocol_version": "Protocol version",
+          "model": "Model"
+        },
+        "data_description": {
+          "host": "Give the heater a fixed IP in your router.",
+          "protocol_version": "Auto tries 3.3, 3.4, 3.5 and 3.1."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect. Check the IP, device ID, local key and protocol version, and close the Klarstein/Smart Life app on your phone."
+    },
+    "abort": {
+      "already_configured": "This heater is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Settings",
+        "data": {
+          "host": "IP address",
+          "protocol_version": "Protocol version",
+          "scan_interval": "Poll interval (seconds)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect with these settings."
+    }
+  },
+  "selector": {
+    "model": {
+      "options": {
+        "auto": "Detect automatically",
+        "bornholm_smart_1500": "Bornholm Smart 1500",
+        "bornholm_smart_1kw": "Bornholm Smart (1 kW)",
+        "wonderwall_bornholm": "Wonderwall Bornholm (IR)"
+      }
+    }
+  },
+  "entity": {
+    "climate": {
+      "heater": {
+        "state_attributes": {
+          "preset_mode": {
+            "state": {
+              "low": "Low",
+              "high": "High",
+              "away": "Frost protection",
+              "eco": "Eco",
+              "comfort": "Comfort"
+            }
+          }
+        }
+      }
+    },
+    "lock": {
+      "child_lock": {
+        "name": "Child lock"
+      }
+    },
+    "select": {
+      "timer": {
+        "name": "Timer",
+        "state": {
+          "cancel": "Off",
+          "1h": "1 h",
+          "2h": "2 h",
+          "3h": "3 h",
+          "4h": "4 h",
+          "5h": "5 h",
+          "6h": "6 h",
+          "7h": "7 h",
+          "8h": "8 h",
+          "9h": "9 h",
+          "10h": "10 h",
+          "11h": "11 h",
+          "12h": "12 h",
+          "13h": "13 h",
+          "14h": "14 h",
+          "15h": "15 h",
+          "16h": "16 h",
+          "17h": "17 h",
+          "18h": "18 h",
+          "19h": "19 h",
+          "20h": "20 h",
+          "21h": "21 h",
+          "22h": "22 h",
+          "23h": "23 h",
+          "24h": "24 h"
+        }
+      }
+    },
+    "sensor": {
+      "time_remaining": {
+        "name": "Time remaining"
+      }
+    },
+    "switch": {
+      "display": {
+        "name": "Display"
+      },
+      "backlight": {
+        "name": "Backlight"
+      }
+    }
+  }
+}
