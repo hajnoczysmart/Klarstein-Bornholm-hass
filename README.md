@@ -10,7 +10,7 @@ Local (cloud-free) Home Assistant integration for **Klarstein Bornholm** Wi-Fi c
 | Bornholm Smart (1 kW, WBR3 module) | `dcxerfhhzu2x1bei` |
 | Wonderwall Bornholm / Bornholm IR (GL23040) | `zhepqxx83p6xou61`, `kwicelwvcvgru9vr` |
 
-Other Bornholm Smart variants (e.g. 2 kW) use the same datapoints and are detected automatically. The datapoint mappings are based on the community-verified device files of the [tuya-local](https://github.com/make-all/tuya-local) project.
+Other Bornholm Smart variants (e.g. 2 kW) use the same datapoints and are detected automatically. With cloud-assisted setup the integration also reads the heater's datapoint description from Tuya, so features such as **Eco mode**, the exact temperature range and extra heat levels are picked up automatically. The datapoint mappings are based on the community-verified device files of the [tuya-local](https://github.com/make-all/tuya-local) project.
 
 ## Entities
 
@@ -20,7 +20,8 @@ Other Bornholm Smart variants (e.g. 2 kW) use the same datapoints and are detect
 | `lock` | child lock |
 | `select` | shut-off timer (off, 1–24 h) |
 | `sensor` | timer time remaining |
-| `switch` | display (and backlight on the 1 kW model) |
+| `switch` | Eco mode (where supported), display (and backlight on the 1 kW model) |
+| `select` (mode) | operating mode, on heaters that report Eco as part of a mode list |
 | `binary_sensor` | fault indicator (with fault code) |
 
 ## Installation via HACS
@@ -32,33 +33,29 @@ Other Bornholm Smart variants (e.g. 2 kW) use the same datapoints and are detect
 
 Manual installation: copy `custom_components/klarstein_bornholm` into your HA `config/custom_components/` folder and restart.
 
-## What you need: IP address, device ID, local key
+## Setup
 
-Pair the heater with the **Smart Life** (or Tuya Smart) app first. If it is currently in the Klarstein app, remove it there and add it again in Smart Life.
+Pair the heater with the **Tuya Smart** or **Smart Life** app first.
 
-**Getting the device ID and local key with `tinytuya`:**
+Settings → Devices & services → **Add integration** → *Klarstein Bornholm*, then pick one of:
 
-1. Sign up on the [Tuya IoT Platform](https://platform.tuya.com/) and create a Cloud project (data center: *Central Europe* for EU accounts).
-2. In the project: **Devices → Link App Account**, then scan the QR code with the Smart Life app (Me → scan icon top right).
-3. On a computer:
-   ```bash
-   pip install tinytuya
-   python -m tinytuya wizard
-   ```
-   Enter the project's Access ID and Secret. The wizard prints `id` and `key` for every device. `key` is the local key.
-4. Find the IP address in your router or with `python -m tinytuya scan`. Giving the heater a fixed IP (DHCP reservation) is recommended.
+### Log in with the Tuya app (recommended)
 
-> The local key changes whenever the heater is re-paired in the app. Fetch it again and re-add the integration in that case.
+1. In the Tuya Smart / Smart Life app: **Me → Settings (⚙) → Account and Security**, copy the **User Code** at the bottom (case-sensitive).
+2. Enter the user code. A QR code is shown.
+3. In the app, tap the scan icon on the **Me** tab, scan the QR code and confirm the login.
+4. Pick your heater from the list.
+5. Home Assistant listens on your network for up to 20 seconds to find the heater's IP address and protocol version. If it can't, you are asked for the IP address.
 
-## Configuration
+The cloud login is used only during setup to read the device ID, local key and datapoint description; nothing is stored and normal operation is fully local. If you re-pair the heater in the app (which changes its local key), simply run the setup again: the existing entry is updated.
 
-Settings → Devices & services → **Add integration** → *Klarstein Bornholm*
+### Manual setup
 
-- **IP address**, **Device ID**, **Local key**
-- **Protocol version**: leave on *auto*; it tries 3.3, 3.4, 3.5 and 3.1 in turn
-- **Model**: leave on *Detect automatically*, or pick one manually if detection is wrong
+Enter the **IP address**, **device ID** and **local key** yourself (e.g. from `python -m tinytuya wizard`). Leave **Protocol version** on *auto* and **Model** on *Detect automatically*. Eco mode is offered on DP 5 when the heater reports it; for full auto-detection use the app login above.
 
-IP address, protocol version and poll interval can be changed later via the integration's **Configure** button.
+### Afterwards
+
+IP address, protocol version and poll interval can be changed via the integration's **Configure** button. Giving the heater a fixed IP (DHCP reservation) is recommended.
 
 ## Troubleshooting
 

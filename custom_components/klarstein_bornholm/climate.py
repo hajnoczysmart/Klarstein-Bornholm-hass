@@ -30,7 +30,6 @@ class BornholmClimate(BornholmEntity, ClimateEntity):
     _attr_name = None
     _attr_translation_key = "heater"
     _attr_hvac_modes = [HVACMode.OFF, HVACMode.HEAT]
-    _attr_target_temperature_step = 1
 
     def __init__(self, coordinator: BornholmCoordinator) -> None:
         super().__init__(coordinator, "climate")
@@ -51,6 +50,10 @@ class BornholmClimate(BornholmEntity, ClimateEntity):
             if self.device.fahrenheit
             else UnitOfTemperature.CELSIUS
         )
+
+    @property
+    def target_temperature_step(self) -> float:
+        return self.device.temp_step
 
     @property
     def min_temp(self) -> float:

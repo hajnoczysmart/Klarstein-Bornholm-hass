@@ -1,4 +1,4 @@
-"""Shut-off timer."""
+"""Shut-off timer and (on some models) operating mode."""
 
 from __future__ import annotations
 
@@ -18,8 +18,13 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     coordinator = entry.runtime_data
-    if coordinator.device.profile.timer_dp:
-        async_add_entities([BornholmTimer(coordinator)])
+    device = coordinator.device
+    entities: list[SelectEntity] = []
+    if device.profile.timer_dp:
+        entities.append(BornholmTimer(coordinator))
+    if device.mode_dp:
+        entities.append(BornholmMode(coordinator))
+    async_add_entities(entities)
 
 
 class BornholmTimer(BornholmEntity, SelectEntity):
@@ -37,3 +42,20 @@ class BornholmTimer(BornholmEntity, SelectEntity):
 
     async def async_select_option(self, option: str) -> None:
         await self.coordinator.async_command(self.device.set_timer, option)
+
+
+class BornholmMode(BornholmEntity, SelectEntity):
+    """Operating mode enum reported by the cloud DP spec (contains Eco)."""
+
+    _attr_translation_key = "mode"
+
+    def __init__(self, coordinator: BornholmCoordinator) -> None:
+        super().__init__(coordinator, "mode")
+        self._attr_options = list(self.device.mode_options.values())
+
+    @property
+    def current_option(self) -> str | None:
+        return self.device.mode
+
+    async def async_select_option(self, option: str) -> None:
+        await self.coordinator.async_command(self.device.set_mode, option)

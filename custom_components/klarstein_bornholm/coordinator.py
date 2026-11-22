@@ -15,6 +15,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .const import (
     CONF_DEVICE_ID,
+    CONF_DP_SPEC,
     CONF_LOCAL_KEY,
     CONF_MODEL,
     CONF_PROTOCOL,
@@ -42,6 +43,7 @@ class BornholmCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             local_key=entry.data[CONF_LOCAL_KEY],
             protocol_version=opts[CONF_PROTOCOL],
             model=entry.data[CONF_MODEL],
+            dp_spec=entry.data.get(CONF_DP_SPEC),
         )
         super().__init__(
             hass,

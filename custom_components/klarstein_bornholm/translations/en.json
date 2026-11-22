@@ -3,7 +3,47 @@
     "step": {
       "user": {
         "title": "Klarstein Bornholm",
-        "description": "Enter the heater's local Tuya details. Device ID and local key can be fetched with `tinytuya wizard` or the Tuya IoT platform (see README).",
+        "description": "How do you want to add the heater?",
+        "menu_options": {
+          "cloud": "Log in with the Tuya Smart / Smart Life app (finds everything automatically)",
+          "manual": "Enter IP address, device ID and local key manually"
+        }
+      },
+      "cloud": {
+        "title": "Log in with the Tuya app",
+        "description": "In the Tuya Smart or Smart Life app open **Me → Settings (⚙) → Account and Security** and copy the **User Code** shown at the bottom. The code is case-sensitive.{error}",
+        "data": {
+          "user_code": "User code"
+        }
+      },
+      "scan": {
+        "title": "Scan the QR code",
+        "description": "Open the Tuya Smart or Smart Life app, tap the scan icon on the **Me** tab and scan this QR code, then confirm the login in the app. Press **Submit** when done. The code expires after about a minute.{error}"
+      },
+      "pick": {
+        "title": "Choose the heater",
+        "data": {
+          "device_id": "Device"
+        }
+      },
+      "search": {
+        "title": "Find {name} on your network",
+        "description": "Home Assistant will now listen for the heater on your local network to find its IP address and protocol version. This takes up to 20 seconds. Make sure the heater is powered on."
+      },
+      "host": {
+        "title": "IP address of {name}",
+        "description": "The heater was not found automatically. Enter its IP address (see your router's list of connected devices).",
+        "data": {
+          "host": "IP address",
+          "protocol_version": "Protocol version"
+        },
+        "data_description": {
+          "protocol_version": "Auto tries 3.3, 3.4, 3.5 and 3.1."
+        }
+      },
+      "manual": {
+        "title": "Manual setup",
+        "description": "Enter the heater's local Tuya details: IP address, device ID and local key.",
         "data": {
           "host": "IP address",
           "device_id": "Device ID",
@@ -18,10 +58,14 @@
       }
     },
     "error": {
-      "cannot_connect": "Could not connect. Check the IP, device ID, local key and protocol version, and close the Klarstein/Smart Life app on your phone."
+      "cannot_connect": "Could not connect. Check the IP address, device ID, local key and protocol version, and close the Tuya / Smart Life app on your phone.",
+      "cloud_error": "Tuya rejected the request. Check the user code.",
+      "login_failed": "Login not completed. Scan the new QR code and confirm the login in the app, then press Submit."
     },
     "abort": {
-      "already_configured": "This heater is already configured."
+      "already_configured": "This heater is already configured. Its local key and device information have been refreshed.",
+      "cloud_error": "Could not reach the Tuya cloud. Try again later or use manual setup.",
+      "no_devices": "No devices that support local control were found in this Tuya account."
     }
   },
   "options": {
@@ -43,7 +87,7 @@
     "model": {
       "options": {
         "auto": "Detect automatically",
-        "bornholm_smart_1500": "Bornholm Smart 1500",
+        "bornholm_smart_1500": "Bornholm Smart (1500 W / 2000 W)",
         "bornholm_smart_1kw": "Bornholm Smart (1 kW)",
         "wonderwall_bornholm": "Wonderwall Bornholm (IR)"
       }
@@ -59,7 +103,13 @@
               "high": "High",
               "away": "Frost protection",
               "eco": "Eco",
-              "comfort": "Comfort"
+              "comfort": "Comfort",
+              "boost": "Boost",
+              "anti_frost": "Frost protection",
+              "antifreeze": "Frost protection",
+              "sleep": "Sleep",
+              "auto": "Auto",
+              "manual": "Manual"
             }
           }
         }
@@ -100,6 +150,19 @@
           "23h": "23 h",
           "24h": "24 h"
         }
+      },
+      "mode": {
+        "name": "Mode",
+        "state": {
+          "eco": "Eco",
+          "comfort": "Comfort",
+          "anti_frost": "Frost protection",
+          "antifreeze": "Frost protection",
+          "auto": "Auto",
+          "manual": "Manual",
+          "low": "Low",
+          "high": "High"
+        }
       }
     },
     "sensor": {
@@ -113,6 +176,9 @@
       },
       "backlight": {
         "name": "Backlight"
+      },
+      "eco": {
+        "name": "Eco"
       }
     }
   }

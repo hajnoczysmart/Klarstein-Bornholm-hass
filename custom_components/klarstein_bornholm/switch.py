@@ -41,21 +41,32 @@ async def async_setup_entry(
                 lambda d, on: d.set_backlight(on),
             )
         )
+    device = coordinator.device
+    if device.eco_dp and (device.eco_from_spec or device.has(device.eco_dp)):
+        entities.append(
+            BornholmSwitch(
+                coordinator,
+                "eco",
+                lambda d: d.eco_on,
+                lambda d, on: d.set_eco(on),
+                None,  # main control, not a config entity
+            )
+        )
     async_add_entities(entities)
 
 
 class BornholmSwitch(BornholmEntity, SwitchEntity):
-    _attr_entity_category = EntityCategory.CONFIG
-
     def __init__(
         self,
         coordinator: BornholmCoordinator,
         key: str,
         getter: Callable[[BornholmDevice], bool | None],
         setter: Callable[[BornholmDevice, bool], None],
+        category: EntityCategory | None = EntityCategory.CONFIG,
     ) -> None:
         super().__init__(coordinator, key)
         self._attr_translation_key = key
+        self._attr_entity_category = category
         self._getter = getter
         self._setter = setter
 
