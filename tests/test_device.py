@@ -98,7 +98,8 @@ def test_smart1kw_fahrenheit_and_backlight():
     d = make(MODEL_SMART_1KW, SMART1KW)
     assert d.timer == "3h"
     assert d.backlight_on is True
-    assert d.display_on is False
+    assert d.display_on is None  # DP 5 is Eco on this product, not the display
+    assert d.eco_dp == "5" and d.eco_on is True
     assert d.preset_options == ["low", "high"]
     d._dev.state["103"] = "F"
     d.update()

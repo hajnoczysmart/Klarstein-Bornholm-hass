@@ -88,7 +88,7 @@
       "options": {
         "auto": "Detect automatically",
         "bornholm_smart_1500": "Bornholm Smart (1500 W / 2000 W)",
-        "bornholm_smart_1kw": "Bornholm Smart (1 kW)",
+        "bornholm_smart_1kw": "Bornholm Smart (WBR3, 1 kW / 2 kW)",
         "wonderwall_bornholm": "Wonderwall Bornholm (IR)"
       }
     }

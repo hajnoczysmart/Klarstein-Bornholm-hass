@@ -7,7 +7,7 @@ Local (cloud-free) Home Assistant integration for **Klarstein Bornholm** Wi-Fi c
 | Model | Tuya product ID |
 |---|---|
 | Bornholm Smart 1500 | `movachsonarakbut` |
-| Bornholm Smart (1 kW, WBR3 module) | `dcxerfhhzu2x1bei` |
+| Bornholm Smart (WBR3 module, 1 kW / 2 kW) | `dcxerfhhzu2x1bei` |
 | Wonderwall Bornholm / Bornholm IR (GL23040) | `zhepqxx83p6xou61`, `kwicelwvcvgru9vr` |
 
 Other Bornholm Smart variants (e.g. 2 kW) use the same datapoints and are detected automatically. With cloud-assisted setup the integration also reads the heater's datapoint description from Tuya, so features such as **Eco mode**, the exact temperature range and extra heat levels are picked up automatically. The datapoint mappings are based on the community-verified device files of the [tuya-local](https://github.com/make-all/tuya-local) project.
@@ -20,7 +20,7 @@ Other Bornholm Smart variants (e.g. 2 kW) use the same datapoints and are detect
 | `lock` | child lock |
 | `select` | shut-off timer (off, 1–24 h) |
 | `sensor` | timer time remaining |
-| `switch` | Eco mode (where supported), display (and backlight on the 1 kW model) |
+| `switch` | Eco mode, display or backlight (depending on model) |
 | `select` (mode) | operating mode, on heaters that report Eco as part of a mode list |
 | `binary_sensor` | fault indicator (with fault code) |
 
