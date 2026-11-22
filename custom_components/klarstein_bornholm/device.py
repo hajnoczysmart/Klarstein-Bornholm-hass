@@ -10,7 +10,7 @@ import json
 import logging
 import re
 import threading
-from dataclasses import fields, replace
+from dataclasses import fields
 from typing import Any
 
 import tinytuya
@@ -79,27 +79,23 @@ class BornholmDevice:
     # ------------------------------------------------------------ DP spec
 
     def _setup_from_spec(self) -> None:
-        # The device's own DP spec wins over the profile: if it names a DP
-        # "eco", any other feature the profile mapped to that DP is dropped.
+        p = self.profile
+        mapped = {
+            getattr(p, f.name) for f in fields(p) if f.name.endswith("_dp")
+        } - {None, p.eco_dp}
+        # Cloud DP names are not always right (the WBR3 Bornholm calls its
+        # display DP "ECO"), so the spec may only add an Eco DP that the
+        # profile does not already use for something else.
         spec_eco = next(
             (
                 dp
                 for dp, s in sorted(self.spec.items(), key=lambda kv: int(kv[0]))
-                if s["type"] == "Boolean" and "eco" in s["code"].lower()
+                if dp not in mapped
+                and s["type"] == "Boolean"
+                and "eco" in s["code"].lower()
             ),
             None,
         )
-        if spec_eco:
-            core = {"power_dp", "target_temp_dp", "current_temp_dp"}
-            clash = {
-                f.name: None
-                for f in fields(self.profile)
-                if f.name.endswith("_dp")
-                and f.name not in core | {"eco_dp"}
-                and getattr(self.profile, f.name) == spec_eco
-            }
-            self.profile = replace(self.profile, eco_dp=spec_eco, **clash)
-        p = self.profile
         # presets: extend/replace with the values the device really supports
         self.presets: dict[Any, str] = dict(p.presets)
         rng = self._enum_range(p.preset_dp)
@@ -113,10 +109,13 @@ class BornholmDevice:
         }
 
         # Eco as a boolean DP
-        self.eco_dp: str | None = spec_eco
+        profile_eco = p.eco_dp
+        if profile_eco and profile_eco in self.spec:
+            # the spec describes that DP as something else (e.g. "sleep")
+            if "eco" not in self.spec[profile_eco]["code"].lower():
+                profile_eco = None
+        self.eco_dp: str | None = spec_eco or profile_eco
         self.eco_from_spec = spec_eco is not None
-        if not self.spec:
-            self.eco_dp = p.eco_dp
         if self.eco_dp:
             used.add(self.eco_dp)
 

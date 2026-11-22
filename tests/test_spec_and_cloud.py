@@ -71,11 +71,14 @@ def test_no_spec_falls_back_to_profile_eco_dp():
     d = make(MODEL_SMART_1500, SMART1500)
     assert d.eco_dp == "5" and not d.eco_from_spec and d.has("5")
     d1 = make(MODEL_SMART_1KW, {"1": True, "5": True, "103": "C"})
-    assert d1.eco_dp == "5" and d1.profile.display_dp is None
+    assert d1.eco_dp is None and d1.profile.display_dp == "5"
 
 
 def test_real_bornholm_2kw_diagnostics():
-    """Spec and DPs exactly as reported by a 2 kW Bornholm (dcxerfhhzu2x1bei)."""
+    """Spec and DPs exactly as reported by a 2 kW Bornholm (dcxerfhhzu2x1bei).
+
+    The cloud calls DP 5 "ECO", but on the heater it switches the display.
+    """
     spec = {
         "1": {"code": "Power", "type": "Boolean", "values": {}},
         "2": {"code": "TempSet", "type": "Integer", "values": {"unit": "℃/℉", "min": 5, "max": 45, "scale": 0, "step": 1}},
@@ -89,20 +92,23 @@ def test_real_bornholm_2kw_diagnostics():
            "11": 0, "12": 0, "101": False, "102": True, "103": "C"}
     assert detect_model(dps, "dcxerfhhzu2x1bei", spec) == MODEL_SMART_1KW
     d = make(MODEL_SMART_1KW, dps, spec)
-    assert d.eco_dp == "5" and d.eco_from_spec and d.eco_on is False
-    assert d.profile.display_dp is None  # no "display" switch fighting over DP 5
+    assert d.eco_dp is None and not d.eco_from_spec
+    assert d.profile.display_dp == "5" and d.display_on is True
     assert d.preset == "high" and d.preset_options == ["low", "high"]
     assert d.target_temperature == 25 and d.current_temperature == 24
     assert d.temp_range == (5, 45) and d.temp_step == 1
     assert d.backlight_on is False and d.child_lock is False and d.timer == "cancel"
-    d.set_eco(True)
-    assert d._dev.sent[-1] == {"5": True} and d.eco_on is True
+    d.set_display(False)
+    assert d._dev.sent[-1] == {"5": True}
 
 
-def test_spec_eco_overrides_profile_display():
+def test_spec_eco_name_cannot_steal_a_mapped_dp():
     spec = devmod.parse_dp_spec([dto(104, "eco_mode", "Boolean", {})])
     d = make(MODEL_SMART_1500, {"1": True, "104": False}, spec)
-    assert d.eco_dp == "104" and d.profile.display_dp is None
+    assert d.eco_dp == "5" and d.profile.display_dp == "104"  # profile Eco kept
+    spec = devmod.parse_dp_spec([dto(107, "eco", "Boolean", {})])
+    d = make(MODEL_SMART_1KW, {"1": True, "107": False}, spec)
+    assert d.eco_dp == "107" and d.eco_from_spec  # unmapped DP may be Eco
 
 
 def test_spec_without_eco_does_not_guess():
