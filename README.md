@@ -18,7 +18,7 @@ Other Bornholm Smart variants (e.g. 2 kW) use the same datapoints and are detect
 |---|---|
 | `climate` | on/off, target temperature (5–45 °C, Wonderwall: 5–50 °C), current temperature, heating/idle, preset (low/high/frost protection, or eco/comfort) |
 | `lock` | child lock |
-| `select` | shut-off timer (off, 1–24 h) |
+| `select` | heating level (low/high), shut-off timer (off, 1–24 h) |
 | `sensor` | timer time remaining |
 | `switch` | Eco mode, display or backlight (depending on model) |
 | `select` (mode) | operating mode, on heaters that report Eco as part of a mode list |

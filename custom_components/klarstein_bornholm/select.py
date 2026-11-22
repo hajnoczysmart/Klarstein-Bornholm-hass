@@ -20,6 +20,8 @@ async def async_setup_entry(
     coordinator = entry.runtime_data
     device = coordinator.device
     entities: list[SelectEntity] = []
+    if device.profile.preset_dp and device.preset_options:
+        entities.append(BornholmLevel(coordinator))
     if device.profile.timer_dp:
         entities.append(BornholmTimer(coordinator))
     if device.mode_dp:
@@ -59,3 +61,20 @@ class BornholmMode(BornholmEntity, SelectEntity):
 
     async def async_select_option(self, option: str) -> None:
         await self.coordinator.async_command(self.device.set_mode, option)
+
+
+class BornholmLevel(BornholmEntity, SelectEntity):
+    """Heating level (low/high, eco/comfort ...), same as the climate preset."""
+
+    _attr_translation_key = "level"
+
+    def __init__(self, coordinator: BornholmCoordinator) -> None:
+        super().__init__(coordinator, "level")
+        self._attr_options = self.device.preset_options
+
+    @property
+    def current_option(self) -> str | None:
+        return self.device.preset
+
+    async def async_select_option(self, option: str) -> None:
+        await self.coordinator.async_command(self.device.set_preset, option)

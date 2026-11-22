@@ -109,7 +109,8 @@
               "antifreeze": "Frost protection",
               "sleep": "Sleep",
               "auto": "Auto",
-              "manual": "Manual"
+              "manual": "Manual",
+              "middle": "Medium"
             }
           }
         }
@@ -162,6 +163,23 @@
           "manual": "Manual",
           "low": "Low",
           "high": "High"
+        }
+      },
+      "level": {
+        "name": "Heating level",
+        "state": {
+          "low": "Low",
+          "high": "High",
+          "away": "Frost protection",
+          "eco": "Eco",
+          "comfort": "Comfort",
+          "boost": "Boost",
+          "anti_frost": "Frost protection",
+          "antifreeze": "Frost protection",
+          "sleep": "Sleep",
+          "auto": "Auto",
+          "manual": "Manual",
+          "middle": "Medium"
         }
       }
     },

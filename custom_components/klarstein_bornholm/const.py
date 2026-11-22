@@ -84,9 +84,9 @@ PROFILES: dict[str, ModelProfile] = {
         fault_dp="12",
         eco_dp="5",
     ),
-    # Product dcxerfhhzu2x1bei (WBR3 module, 1 kW and 2 kW). The Tuya cloud DP
-    # spec names DP 5 "ECO", but on the heater it switches the display
-    # (confirmed on a 2 kW unit), as tuya-local has it.
+    # Product dcxerfhhzu2x1bei (WBR3 module, 1 kW and 2 kW). DP 5 is Eco, as
+    # the Tuya cloud DP spec says and confirmed on a 2 kW unit (tuya-local
+    # lists it as the display).
     MODEL_SMART_1KW: ModelProfile(
         name="Bornholm Smart (WBR3)",
         max_temp=45,
@@ -95,7 +95,7 @@ PROFILES: dict[str, ModelProfile] = {
         action_dp="101",
         action_idle_value=False,
         child_lock_dp="6",
-        display_dp="5",
+        eco_dp="5",
         backlight_dp="102",
         timer_dp="10",
         timer_numeric=True,
