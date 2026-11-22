@@ -20,7 +20,7 @@ Other Bornholm Smart variants (e.g. 2 kW) use the same datapoints and are detect
 | `lock` | child lock |
 | `select` | heating level (low/high), shut-off timer (off, 1–24 h) |
 | `sensor` | timer time remaining |
-| `switch` | Eco mode, display or backlight (depending on model) |
+| `switch` | power on/off, Eco mode, display or backlight (depending on model) |
 | `select` (mode) | operating mode, on heaters that report Eco as part of a mode list |
 | `binary_sensor` | fault indicator (with fault code) |
 

@@ -22,7 +22,15 @@ async def async_setup_entry(
 ) -> None:
     coordinator = entry.runtime_data
     profile = coordinator.device.profile
-    entities = []
+    entities = [
+        BornholmSwitch(
+            coordinator,
+            "power",
+            lambda d: d.is_on,
+            lambda d, on: d.set_power(on),
+            None,  # main control, not a config entity
+        )
+    ]
     if profile.display_dp:
         entities.append(
             BornholmSwitch(
