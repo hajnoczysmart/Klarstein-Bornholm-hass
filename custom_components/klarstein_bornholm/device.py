@@ -9,7 +9,10 @@ from __future__ import annotations
 import json
 import logging
 import re
+import select
+import socket
 import threading
+import time
 from dataclasses import fields
 from typing import Any
 
@@ -185,6 +188,21 @@ class BornholmDevice:
                 self.dps.update({str(k): v for k, v in result["dps"].items()})
                 return
         self.dps.update(values)
+
+    @property
+    def host(self) -> str:
+        return self._dev.address
+
+    def set_address(self, host: str, protocol_version: str | None = None) -> None:
+        """Point the connection at a new IP (and protocol version)."""
+        with self._lock:
+            try:
+                self._dev.close()
+            except Exception:  # noqa: BLE001
+                pass
+            self._dev.address = host
+            if protocol_version:
+                self._dev.set_version(float(protocol_version))
 
     def close(self) -> None:
         with self._lock:
@@ -373,13 +391,87 @@ def probe(host: str, device_id: str, local_key: str, protocol_version: str) -> d
     return {str(k): v for k, v in dps.items()}
 
 
-def find_on_lan(device_id: str) -> dict:
-    """Look for the heater's UDP broadcast on the LAN (takes up to ~20 s)."""
+# Tuya devices broadcast their ID, IP and protocol version every few seconds
+UDP_PORTS = (6666, 6667, 7000)
+_SCAN_LOCK = threading.Lock()
+_SCAN_CACHE: dict[str, Any] = {"time": 0.0, "found": {}}
+SCAN_CACHE_SECONDS = 60
+
+
+def _decode_broadcast(data: bytes) -> dict | None:
     try:
-        found = tinytuya.find_device(dev_id=device_id)
-    except OSError as err:
-        _LOGGER.debug("LAN scan failed: %s", err)
-        return {}
-    if not found or not found.get("ip"):
-        return {}
-    return {"ip": found["ip"], "version": str(found.get("version") or "")}
+        from tinytuya.core.udp_helper import decrypt_udp
+    except ImportError:  # pragma: no cover - older tinytuya layout
+        decrypt_udp = tinytuya.decrypt_udp
+    try:
+        if data[:1] == b"{":  # unencrypted, unframed (old v3.1 firmware)
+            payload = json.loads(data)
+        else:
+            payload = json.loads(decrypt_udp(data))
+    except Exception:  # noqa: BLE001 - foreign or garbled packets
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def scan_lan(want_id: str | None = None, timeout: float = 12.0) -> dict[str, dict]:
+    """Listen for Tuya UDP broadcasts; return {device_id: {"ip", "version"}}.
+
+    Stops early once want_id is seen. Results are cached for a minute so
+    several heaters losing their IP at once share one scan.
+    """
+    with _SCAN_LOCK:
+        cached = _SCAN_CACHE["found"]
+        fresh = time.monotonic() - _SCAN_CACHE["time"] < SCAN_CACHE_SECONDS
+        if fresh and (want_id is None or want_id in cached):
+            return dict(cached)
+
+        socks = []
+        for port in UDP_PORTS:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            try:
+                sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                if hasattr(socket, "SO_REUSEPORT"):
+                    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+                sock.bind(("", port))
+            except OSError as err:
+                _LOGGER.debug("Cannot listen on UDP %s: %s", port, err)
+                sock.close()
+                continue
+            socks.append(sock)
+        if not socks:
+            return {}
+
+        found: dict[str, dict] = {}
+        deadline = time.monotonic() + timeout
+        try:
+            while (remaining := deadline - time.monotonic()) > 0:
+                ready, _, _ = select.select(socks, [], [], remaining)
+                for sock in ready:
+                    try:
+                        data, addr = sock.recvfrom(4096)
+                    except OSError:
+                        continue
+                    payload = _decode_broadcast(data)
+                    if not payload:
+                        continue
+                    dev_id = payload.get("gwId") or payload.get("id")
+                    if dev_id:
+                        found[dev_id] = {
+                            "ip": payload.get("ip") or addr[0],
+                            "version": str(payload.get("version") or ""),
+                        }
+                if want_id and want_id in found:
+                    break
+        finally:
+            for sock in socks:
+                sock.close()
+
+        _SCAN_CACHE["found"] = {**(cached if fresh else {}), **found}
+        _SCAN_CACHE["time"] = time.monotonic()
+        _LOGGER.debug("LAN scan found %s", found)
+        return dict(_SCAN_CACHE["found"])
+
+
+def find_on_lan(device_id: str, timeout: float = 12.0) -> dict:
+    """Return {"ip", "version"} of one heater from its UDP broadcast, or {}."""
+    return scan_lan(device_id, timeout).get(device_id, {})

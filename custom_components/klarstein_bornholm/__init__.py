@@ -33,4 +33,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: BornholmConfigEntry) ->
 
 
 async def _async_reload(hass: HomeAssistant, entry: BornholmConfigEntry) -> None:
+    coordinator = getattr(entry, "runtime_data", None)
+    if coordinator is not None and dict(entry.options) == coordinator.applied_options:
+        return  # data-only update (e.g. new IP found on the LAN); already applied
     await hass.config_entries.async_reload(entry.entry_id)

@@ -55,10 +55,13 @@ Enter the **IP address**, **device ID** and **local key** yourself (e.g. from `p
 
 ### Afterwards
 
-IP address, protocol version and poll interval can be changed via the integration's **Configure** button. Giving the heater a fixed IP (DHCP reservation) is recommended.
+IP address, protocol version and poll interval can be changed via the integration's **Configure** button.
+
+If the router gives the heater a new IP address, the integration notices that the heater stopped answering, finds it again on the LAN by its device ID (from its UDP broadcast) and updates the stored address automatically. A fixed IP (DHCP reservation) is still recommended.
 
 ## Troubleshooting
 
+- **Tuya error 905 / 914 after a while**: the heater's IP address changed (914 means another heater now answers on the old address). It is found again automatically within a few minutes; Home Assistant must be able to receive UDP broadcasts on ports 6666/6667 from the heater's network.
 - **"Could not connect"**: Tuya devices usually accept only one local connection at a time. Close the phone app and disable the built-in Tuya / Tuya Local / LocalTuya integration for the same device.
 - **Wrong or missing entities**: download diagnostics (integration → device → ⋮ → *Download diagnostics*) and open an issue with it. The local key is redacted.
 - Debug logging:
