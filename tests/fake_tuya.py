@@ -13,6 +13,8 @@ from tinytuya.core.crypto_helper import AESCipher
 class FakeTuyaDevice:
     def __init__(self, ip, dev_id, key, dps):
         self.dev_id, self.cipher, self.dps = dev_id, AESCipher(key.encode()), dps
+        self.connections = 0
+        self.clients = []
         self.srv = socket.socket()
         self.srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.srv.bind((ip, 6668))
@@ -32,7 +34,28 @@ class FakeTuyaDevice:
                 conn, _ = self.srv.accept()
             except OSError:
                 return
+            self.connections += 1
+            self.clients.append(conn)
             threading.Thread(target=self._handle, args=(conn,), daemon=True).start()
+
+    def drop_clients(self):
+        """Simulate the heater / Wi-Fi dropping all open connections."""
+        for conn in self.clients:
+            try:
+                conn.shutdown(socket.SHUT_RDWR)
+                conn.close()
+            except OSError:
+                pass
+        self.clients.clear()
+
+    def push(self, dps):
+        """Unsolicited status update, as sent when the heater is used by hand."""
+        self.dps.update(dps)
+        for conn in self.clients:
+            try:
+                self._reply(conn, 0, CT.STATUS, {"devId": self.dev_id, "dps": dps}, True)
+            except OSError:
+                pass
 
     def _reply(self, conn, seq, cmd, payload, header):
         body = b""

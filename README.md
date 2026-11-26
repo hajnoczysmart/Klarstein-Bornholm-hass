@@ -62,6 +62,7 @@ If the router gives the heater a new IP address, the integration notices that th
 ## Troubleshooting
 
 - **Tuya error 905 / 914 after a while**: the heater's IP address changed (914 means another heater now answers on the old address). It is found again automatically within a few minutes, also when the heaters are on a different subnet than Home Assistant. A DHCP reservation on the router that serves the heaters avoids the problem altogether.
+- **Heater unavailable in Home Assistant but working in the Tuya app, back after a power cycle**: the heater's Wi-Fi module stopped accepting local connections. Since 1.4.0 the integration keeps one long-lived connection per heater instead of opening a new one on every poll, which avoids this.
 - **"Could not connect"**: Tuya devices usually accept only one local connection at a time. Close the phone app and disable the built-in Tuya / Tuya Local / LocalTuya integration for the same device.
 - **Wrong or missing entities**: download diagnostics (integration → device → ⋮ → *Download diagnostics*) and open an issue with it. The local key is redacted.
 - Debug logging:

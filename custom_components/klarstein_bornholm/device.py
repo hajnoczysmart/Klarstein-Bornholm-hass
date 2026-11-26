@@ -69,6 +69,9 @@ class BornholmDevice:
         self.profile: ModelProfile = PROFILES[model]
         self.spec: dict[str, dict] = dp_spec or {}
         self._lock = threading.Lock()
+        # One long-lived TCP connection instead of a new one per poll: the
+        # WBR3 Wi-Fi module stops accepting local connections after many
+        # thousands of short ones (cloud keeps working, local needs a power cycle).
         self._dev = tinytuya.Device(
             device_id,
             address=host,
@@ -77,6 +80,7 @@ class BornholmDevice:
             connection_timeout=5,
             connection_retry_limit=2,
             connection_retry_delay=1,
+            persist=True,
         )
         self.dps: dict[str, Any] = {}
         self._setup_from_spec()
@@ -169,10 +173,21 @@ class BornholmDevice:
             )
         return result
 
+    def _drop_connection(self) -> None:
+        """Close the persistent socket so the next call reconnects cleanly."""
+        try:
+            self._dev.close()
+        except Exception:  # noqa: BLE001
+            pass
+
     def update(self) -> dict[str, Any]:
         """Read all DPs from the heater."""
         with self._lock:
-            result = self._check(self._dev.status())
+            try:
+                result = self._check(self._dev.status())
+            except BornholmError:
+                self._drop_connection()
+                raise
         dps = result.get("dps")
         if not isinstance(dps, dict):
             raise BornholmError(f"Unexpected status payload: {result}")
@@ -183,6 +198,8 @@ class BornholmDevice:
         """Write one or more DPs and merge the echoed state."""
         with self._lock:
             result = self._dev.set_multiple_values(values)
+            if isinstance(result, dict) and ("Error" in result or "Err" in result):
+                self._drop_connection()
         # Some firmwares answer a command with nothing; that is not an error.
         if isinstance(result, dict):
             self._check(result)
