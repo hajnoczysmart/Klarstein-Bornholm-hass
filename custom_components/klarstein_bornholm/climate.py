@@ -44,7 +44,7 @@ class BornholmClimate(BornholmEntity, ClimateEntity):
         self._attr_supported_features = features
 
     @property
-    def temperature_unit(self) -> str:
+    def native_temperature_unit(self) -> str:
         return (
             UnitOfTemperature.FAHRENHEIT
             if self.device.fahrenheit
@@ -80,11 +80,11 @@ class BornholmClimate(BornholmEntity, ClimateEntity):
         return HVACAction.HEATING if heating else HVACAction.IDLE
 
     @property
-    def current_temperature(self) -> float | None:
+    def native_current_temperature(self) -> float | None:
         return self.device.current_temperature
 
     @property
-    def target_temperature(self) -> float | None:
+    def native_target_temperature(self) -> float | None:
         return self.device.target_temperature
 
     @property
@@ -112,3 +112,16 @@ class BornholmClimate(BornholmEntity, ClimateEntity):
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         await self.coordinator.async_command(self.device.set_preset, preset_mode)
+
+
+# Home Assistant before 2026.11 only knows the non-"native" names
+if not hasattr(ClimateEntity, "native_temperature_unit"):
+    BornholmClimate.temperature_unit = property(  # type: ignore[assignment]
+        lambda self: self.native_temperature_unit
+    )
+    BornholmClimate.current_temperature = property(  # type: ignore[assignment]
+        lambda self: self.native_current_temperature
+    )
+    BornholmClimate.target_temperature = property(  # type: ignore[assignment]
+        lambda self: self.native_target_temperature
+    )

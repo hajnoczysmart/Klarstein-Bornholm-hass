@@ -6,6 +6,8 @@ All methods are blocking; Home Assistant calls them in an executor.
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
+import ipaddress
 import json
 import logging
 import re
@@ -475,3 +477,51 @@ def scan_lan(want_id: str | None = None, timeout: float = 12.0) -> dict[str, dic
 def find_on_lan(device_id: str, timeout: float = 12.0) -> dict:
     """Return {"ip", "version"} of one heater from its UDP broadcast, or {}."""
     return scan_lan(device_id, timeout).get(device_id, {})
+
+
+TUYA_TCP_PORT = 6668
+
+
+def _port_open(ip: str, timeout: float) -> bool:
+    try:
+        with socket.create_connection((ip, TUYA_TCP_PORT), timeout=timeout):
+            return True
+    except OSError:
+        return False
+
+
+def sweep_subnet(
+    host: str,
+    device_id: str,
+    local_key: str,
+    protocol_version: str,
+    connect_timeout: float = 0.7,
+) -> dict:
+    """Find the heater in the /24 around its last known IP by unicast.
+
+    Used when UDP broadcasts do not reach Home Assistant (heaters on another
+    subnet / behind a router). Every host with the Tuya port open is asked
+    for its status with *this* heater's local key; only the right heater can
+    answer, because keys are unique per device.
+    """
+    try:
+        net = ipaddress.ip_network(f"{host}/24", strict=False)
+    except ValueError:
+        return {}
+    hosts = [str(ip) for ip in net.hosts()]
+    with ThreadPoolExecutor(max_workers=64) as pool:
+        open_hosts = [
+            ip
+            for ip, ok in zip(hosts, pool.map(lambda ip: _port_open(ip, connect_timeout), hosts))
+            if ok
+        ]
+    # the old address last: it is most likely another heater now
+    open_hosts.sort(key=lambda ip: ip == host)
+    _LOGGER.debug("Tuya port open on %s", open_hosts)
+    for ip in open_hosts:
+        try:
+            probe(ip, device_id, local_key, protocol_version)
+        except BornholmError:
+            continue
+        return {"ip": ip, "version": protocol_version}
+    return {}

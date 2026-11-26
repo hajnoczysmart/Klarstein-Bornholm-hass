@@ -24,7 +24,7 @@ from .const import (
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
 )
-from .device import BornholmDevice, BornholmError, find_on_lan
+from .device import BornholmDevice, BornholmError, find_on_lan, sweep_subnet
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -87,14 +87,26 @@ class BornholmCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._last_rediscovery = now
 
         entry = self.config_entry
+        current = {**entry.data, **entry.options}
         found = await self.hass.async_add_executor_job(
             find_on_lan, entry.data[CONF_DEVICE_ID]
         )
         if not found.get("ip"):
-            _LOGGER.debug("Heater %s not seen on the LAN", entry.data[CONF_DEVICE_ID])
+            # broadcasts don't cross routers: ask each host on the heater's subnet
+            found = await self.hass.async_add_executor_job(
+                sweep_subnet,
+                current[CONF_HOST],
+                entry.data[CONF_DEVICE_ID],
+                entry.data[CONF_LOCAL_KEY],
+                current[CONF_PROTOCOL],
+            )
+        if not found.get("ip"):
+            _LOGGER.warning(
+                "Klarstein Bornholm %s: not found on the network (last IP %s)",
+                entry.title, current[CONF_HOST],
+            )
             return False
 
-        current = {**entry.data, **entry.options}
         host = found["ip"]
         version = found.get("version") or current[CONF_PROTOCOL]
         if host == current[CONF_HOST] and version == current[CONF_PROTOCOL]:
